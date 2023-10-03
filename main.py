@@ -24,6 +24,7 @@ def main():
                     continue
 
             # update dict with name and price
+            float(card_price)
             card_details.update({card_name : card_price})
         
         loop = input("More inputs? (y/n) ").lower().strip() == "y"
@@ -32,7 +33,7 @@ def main():
     card_names_and_prices_dataframe = pd.DataFrame.from_dict(card_details, orient='index')
 
     # Sum all prices and insert into dataframe
-    total_price = sum(card_details.values())
+    total_price = round(sum(card_details.values()), 2)
 
     print("\nDisclaimer: All prices are in USD at the moment")
     print(card_names_and_prices_dataframe)
