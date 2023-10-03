@@ -6,6 +6,7 @@ def main():
     # Key = name, value = price
     card_details = {}
 
+    repeat_copies = 1
     loop = True
 
     while loop:
@@ -23,6 +24,15 @@ def main():
                     print("Uhoh! It looks like your card doesn't exist! Please check your spelling and re-enter.")
                     continue
 
+            # Checks if card is already inputted at least once
+            if card_name in card_details:
+                for i in range(repeat_copies):
+                    repeat_copies += 1
+                card_name = f"{card_name} ({round(repeat_copies/2)})"
+
+            else:
+                pass
+
             # update dict with name and price
             float(card_price)
             card_details.update({card_name : card_price})
@@ -37,7 +47,7 @@ def main():
 
     print("\nDisclaimer: All prices are in USD at the moment")
     print(card_names_and_prices_dataframe)
-    print(f"Total price of cards: {total_price}")
+    print(f"Total price of cards: USD${total_price}")
 
     # Main loop done
 
@@ -61,7 +71,6 @@ def main():
 
         # Sum all prices and insert into dataframe
         total_price = sum(card_details.values())
-        print(f"Total price of cards: {total_price}\n")
-
+        print(f"Total price of cards: {symbol}${total_price}\n")
 
 main()
