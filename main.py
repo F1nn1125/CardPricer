@@ -26,9 +26,8 @@ def main():
 
             # Checks if card is already inputted at least once
             if card_name in card_details:
-                for i in range(repeat_copies):
-                    repeat_copies += 1
-                card_name = f"{card_name} ({round(repeat_copies/2)})"
+                repeat_copies += 1
+                card_name = f"{card_name} ({repeat_copies})"
 
             else:
                 pass
