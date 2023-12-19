@@ -29,31 +29,31 @@ def main():
     loop = True
     symbol = 'USD'
 
-    while loop:
-        repeats = int(input("how many cards? "))
+    while True:
+        while True:
+            card_name = input("Card name (leave blank if done): ").lower()
 
-        for i in range(repeats):
-            while True:
-                card_name = input("Card name: ").lower()
-
-                try:
-                    # If cannot fetch card price it will loop
+            try:
+                # If cannot fetch card price (or if card_name != "") it will loop
+                if card_name != "":
                     card_price = fetcher.get(card_name)
-                    break
-                except:
-                    print("Uhoh! It looks like your card doesn't exist! Please check your spelling and re-enter.")
-                    continue
+                break
+            except:
+                print("Uhoh! It looks like your card doesn't exist, please check your spelling and re-enter.")
+                continue
 
-            # Checks if card is already inputted at least once
-            if card_name in card_details:
-                repeat_copies += 1
-                card_name = f"{card_name} ({repeat_copies})"
+        # Checks if user meant to break loop
+        if card_name == "":
+            break
 
-            # update dict with name and price
-            float(card_price)
-            card_details.update({card_name : card_price})
-        
-        loop = input("More inputs? (y/n) ").lower().strip() == "y"
+        # Checks if card is already inputted at least once
+        if card_name in card_details:
+            repeat_copies += 1
+            card_name = f"{card_name} ({repeat_copies})"
+
+        # update dict with name and price
+        float(card_price)
+        card_details.update({card_name : card_price})
 
     # Create dataframe and total_price
     card_names_and_prices_dataframe = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
