@@ -6,6 +6,7 @@ from currency_converter import CurrencyConverter
 def convert_currency(card_details):
     symbol = input("Please input the currency's symbol you want to convert to, (e.g NZD, EUR, AUD): ")
 
+    # For each card in the dict, it converts the currency.
     for key, value in card_details.items():
 
         # Convert then round the price to 2dp
@@ -22,11 +23,12 @@ def convert_currency(card_details):
 
 # Main Routine
 def main():
-    # Key = name, value = price
+    # Key = card's name, value = card's price
     card_details = {}
 
     repeat_copies = 1
-    loop = True
+
+    # Default currency
     symbol = 'USD'
 
     while True:
@@ -61,7 +63,7 @@ def main():
 
     # Main loop done
 
-    convert = input("Convert currency? (y/n) ").lower().strip() == "y"
+    convert = input("Convert currency? (y/n): ").lower().strip() == "y"
 
     if convert:
         total_price, card_names_and_prices_dataframe, symbol = convert_currency(card_details)
