@@ -3,14 +3,14 @@ from sf_price_fetcher import fetcher
 from currency_converter import CurrencyConverter
 
 # Converts the currency
-def convert_currency(card_details):
+def convert_currency(card_details, default_symbol):
     symbol = input("Please input the currency's symbol you want to convert to, (e.g NZD, EUR, AUD): ")
 
     # For each card in the dict, it converts the currency.
     for key, value in card_details.items():
 
         # Convert then round the price to 2dp
-        converted_price = CurrencyConverter(decimal=True).convert(value, 'USD', symbol)
+        converted_price = CurrencyConverter(decimal=True).convert(value, default_symbol, symbol)
 
         # Update the dictionary
         card_details.update({key : round(converted_price, 2)})
@@ -19,7 +19,7 @@ def convert_currency(card_details):
     card_names_and_prices_dataframe = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
 
     # Sum all prices and insert into dataframe
-    return sum(card_details.values()), card_names_and_prices_dataframe, symbol
+    return sum(list(card_details.values())), card_names_and_prices_dataframe, symbol
 
 # Main Routine
 def main():
@@ -29,7 +29,7 @@ def main():
     repeat_copies = 1
 
     # Default currency
-    symbol = 'USD'
+    default_symbol = 'USD'
 
     while True:
         while True:
@@ -66,7 +66,11 @@ def main():
     convert = input("Convert currency? (y/n): ").lower().strip() == "y"
 
     if convert:
-        total_price, card_names_and_prices_dataframe, symbol = convert_currency(card_details)
+        total_price, card_names_and_prices_dataframe, converted_symbol = convert_currency(card_details, default_symbol)
+        symbol = converted_symbol
+    
+    else:
+        symbol = default_symbol
 
     print(card_names_and_prices_dataframe)
     print(f"Total price of cards: {symbol}${total_price}\n")
