@@ -63,14 +63,13 @@ def main():
 
     # Main loop done
 
+    symbol = default_symbol
+
     convert = input("Convert currency? (y/n): ").lower().strip() == "y"
 
     if convert:
         total_price, card_names_and_prices_dataframe, converted_symbol = convert_currency(card_details, default_symbol)
         symbol = converted_symbol
-    
-    else:
-        symbol = default_symbol
 
     print(card_names_and_prices_dataframe)
     print(f"Total price of cards: {symbol}${total_price}\n")
