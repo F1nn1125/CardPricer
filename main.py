@@ -4,11 +4,18 @@ from currency_converter import CurrencyConverter
 
 # Converts the currency
 def convert_currency(card_details, default_symbol):
-    symbol = input("Please input the currency's symbol you want to convert to, (e.g NZD, EUR, AUD): ")
+    while True:
+        try:
+            symbol = input("Please input the currency's symbol "
+                        "you want to convert to, (e.g NZD, EUR, AUD): ").upper()
+            CurrencyConverter().convert(1, default_symbol, symbol) # Throw a test convert to check if symbol exists
+            break
+        except ValueError:
+            print("Please input a valid currency symbol!")
+            continue
 
     # For each card in the dict, it converts the currency.
     for key, value in card_details.items():
-
         # Convert then round the price to 2dp
         converted_price = CurrencyConverter(decimal=True).convert(value, default_symbol, symbol)
 
@@ -16,7 +23,10 @@ def convert_currency(card_details, default_symbol):
         card_details.update({key : round(converted_price, 2)})
 
     # Update and print dataframe
-    card_names_and_prices_dataframe = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
+    card_names_and_prices_dataframe = pd.DataFrame.from_dict(
+        card_details,
+        orient='index',
+        columns=[''])
 
     # Sum all prices and insert into dataframe
     return sum(list(card_details.values())), card_names_and_prices_dataframe, symbol
@@ -25,7 +35,6 @@ def convert_currency(card_details, default_symbol):
 def main():
     # Key = card's name, value = card's price
     card_details = {}
-
     repeat_copies = 1
 
     # Default currency
@@ -40,8 +49,9 @@ def main():
                 if card_name != "":
                     card_price = fetcher.get(card_name)
                 break
-            except:
-                print("Uhoh! It looks like your card doesn't exist, please check your spelling and re-enter.")
+            except TypeError:
+                print("Uhoh! It looks like your card doesn't exist, "
+                      "please check your spelling and re-enter.")
                 continue
 
         # Checks if user meant to break loop
@@ -58,7 +68,11 @@ def main():
         card_details.update({card_name : card_price})
 
     # Create dataframe and total_price
-    card_names_and_prices_dataframe = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
+    card_names_and_prices_dataframe = pd.DataFrame.from_dict(
+        card_details,
+        orient='index',
+        columns=[''])
+
     total_price = round(sum(card_details.values()), 2)
 
     # Main loop done
@@ -68,7 +82,10 @@ def main():
     convert = input("Convert currency? (y/n): ").lower().strip() == "y"
 
     if convert:
-        total_price, card_names_and_prices_dataframe, converted_symbol = convert_currency(card_details, default_symbol)
+        total_price, card_names_and_prices_dataframe, converted_symbol = convert_currency(
+            card_details,
+            default_symbol)
+
         symbol = converted_symbol
 
     print(card_names_and_prices_dataframe)
