@@ -59,7 +59,12 @@ def main():
 
     # Create dataframe and total_price
     card_names_and_prices_dataframe = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
-    total_price = round(sum(card_details.values()), 2)
+    print(card_names_and_prices_dataframe)
+
+    # Create card_prices list
+    card_prices = card_details.values()
+    list(card_prices)
+    total_price = round(sum(card_prices), 2)
 
     # Main loop done
 
