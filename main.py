@@ -58,6 +58,8 @@ def main():
     card_details = {}
     repeat_copies = 1
 
+    card_count = 0
+
     # Default currency
     default_symbol = 'USD'
 
@@ -71,6 +73,23 @@ def main():
 
                 # If cannot fetch card price (or if card_name != "") it will loop
                 if card_name != "":
+                    # Funny business to check for "sol ring x 2"
+                    if len(card_name.split()) > 1:
+                        split_card_name = card_name.split()
+
+                        if split_card_name[-2] == "x":
+                            # Gets count of certain card
+                            card_count = int(split_card_name[-1])
+                            print(card_count)
+
+                            # Removes x and number
+                            split_card_name.pop(-2)
+                            split_card_name.pop(-1)
+
+                            # Joins the list into the card name
+                            card_name = " ".join(split_card_name)
+
+                    # Calls the api
                     card_price = fetcher.get(card_name)
 
                 break
@@ -90,10 +109,22 @@ def main():
 
         # update dict with name and price
         float(card_price)
-        card_details.update({card_name : card_price})
+
+        if card_count > 0:
+            repeat_copies = card_count
+            card_price = card_price * card_count
+            new_card_name = f"{card_name} ({repeat_copies})"
+            card_details.update({new_card_name : card_price})
+        
+        else:
+            card_details.update({card_name : card_price})
+
+            # # Checks if card is already inputted at least once
+            # if card_name in card_details:
 
     # Create data frame and total_price
-    card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
+    card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=['']).to_string()
+    
     
     print(card_names_and_prices_data_frame)
 
