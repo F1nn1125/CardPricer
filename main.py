@@ -17,10 +17,7 @@ def convert_currency(card_details, default_symbol):
             symbol = input("Please input the currency's symbol "
                 "you want to convert to, (e.g NZD, EUR, AUD): ").upper()
 
-            CurrencyConverter().convert(
-                1,
-                default_symbol,
-                symbol) # Throw a test convert to check if symbol exists
+            CurrencyConverter().convert(1, default_symbol, symbol) # Throw a test convert to check if symbol exists
             
             break
         except:
@@ -36,10 +33,7 @@ def convert_currency(card_details, default_symbol):
         card_details.update({key : round(converted_price, 2)})
 
     # Update and print data frame
-    card_names_and_prices_data_frame = pd.DataFrame.from_dict(
-        card_details,
-        orient='index',
-        columns=[''])
+    card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
 
     # Sum all prices and insert into data frame
     return sum(list(card_details.values())), card_names_and_prices_data_frame, symbol
@@ -99,18 +93,15 @@ def main():
         card_details.update({card_name : card_price})
 
     # Create data frame and total_price
-    card_names_and_prices_data_frame = pd.DataFrame.from_dict(
-        card_details,
-        orient='index',
-        columns=[''])
+    card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
     
     print(card_names_and_prices_data_frame)
 
     # Create card_prices list
     card_prices = card_details.values()
-    list(card_prices)
+    card_prices = [float(price) for price in card_prices]
 
-    total_price = round(sum(card_prices), 2)
+    total_price = round(sum(card_prices), 2) if card_prices else 0.0
 
     # Main loop done
 
@@ -125,10 +116,7 @@ def main():
             continue
 
     if convert == "y" or convert == "yes":
-        total_price, card_names_and_prices_data_frame, converted_symbol = convert_currency(
-            card_details,
-            default_symbol)
-
+        total_price, card_names_and_prices_data_frame, converted_symbol = convert_currency(card_details, default_symbol)
         symbol = converted_symbol
 
     total_price_string = f"\nTotal price of cards: {symbol}${total_price}"
@@ -146,8 +134,6 @@ def main():
             continue
 
     if answer == "y" or answer == "yes":
-        write_to_file(
-            card_names_and_prices_data_frame,
-            total_price_string)
+        write_to_file(card_names_and_prices_data_frame, total_price_string)
 
 main()
