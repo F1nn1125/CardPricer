@@ -80,7 +80,6 @@ def main():
                         if split_card_name[-2] == "x":
                             # Gets count of certain card
                             card_count = int(split_card_name[-1])
-                            print(card_count)
 
                             # Removes x and number
                             split_card_name.pop(-2)
