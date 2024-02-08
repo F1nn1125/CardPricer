@@ -3,13 +3,6 @@ import pandas as pd
 from sf_price_fetcher import fetcher
 from currency_converter import CurrencyConverter
 
-# Get date for file_name
-today = datetime.now()
-
-day = today.strftime("%d")
-month = today.strftime("%m")
-year = today.strftime("%Y")
-
 # Converts the currency
 def convert_currency(card_details, default_symbol):
     while True:
@@ -18,7 +11,6 @@ def convert_currency(card_details, default_symbol):
                 "you want to convert to, (e.g NZD, EUR, AUD): ").upper()
 
             CurrencyConverter().convert(1, default_symbol, symbol) # Throw a test convert to check if symbol exists
-            
             break
         except:
             print("Please input a valid currency symbol!")
@@ -28,28 +20,33 @@ def convert_currency(card_details, default_symbol):
     for key, value in card_details.items():
         # Convert then round the price to 2dp
         converted_price = CurrencyConverter(decimal=True).convert(value, default_symbol, symbol)
+        rounded_converted_price = round(converted_price, 2)
 
         # Update the dictionary
-        card_details.update({key : round(converted_price, 2)})
+        card_details.update({key : rounded_converted_price})
 
     # Update and print data frame
     card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
 
     # Sum all prices and insert into data frame
-    return sum(list(card_details.values())), card_names_and_prices_data_frame, symbol
+    prices_list = list(card_details.values())
+    total_prices = sum(prices_list)
+    return total_prices, card_names_and_prices_data_frame, symbol
 
 # It writes to the file
 def write_to_file(data_frame, total_price_string):
-    file_name = f"card_price_list_{day}_{month}_{year}"
+    # Get datetime for file name
+    today = datetime.now()
+    file_name_date = today.strftime("%d_%m_%Y")
+
+    file_name = f"card_price_list_{file_name_date}"
     write_to = f"{file_name}.txt"
     text_file = open(write_to, "w+")
-    text_file.write(f"{file_name}\n\n")
 
     # Write in the data frame + total price
     text_file.write(str(data_frame))
     text_file.write(total_price_string)
 
-    # Close the text_file
     text_file.close()
 
 # Main Routine
@@ -57,8 +54,6 @@ def main():
     # Key = card's name, value = card's price
     card_details = {}
     repeat_copies = 1
-
-    card_count = 0
 
     # Default currency
     default_symbol = 'USD'
@@ -73,22 +68,6 @@ def main():
 
                 # If cannot fetch card price (or if card_name != "") it will loop
                 if card_name != "":
-                    # Funny business to check for "sol ring x 2"
-                    if len(card_name.split()) > 1:
-                        split_card_name = card_name.split()
-
-                        if split_card_name[-2] == "x":
-                            # Gets count of certain card
-                            card_count = int(split_card_name[-1])
-
-                            # Removes x and number
-                            split_card_name.pop(-2)
-                            split_card_name.pop(-1)
-
-                            # Joins the list into the card name
-                            card_name = " ".join(split_card_name)
-
-                    # Calls the api
                     card_price = fetcher.get(card_name)
 
                 break
@@ -108,22 +87,10 @@ def main():
 
         # update dict with name and price
         float(card_price)
-
-        if card_count > 0:
-            repeat_copies = card_count
-            card_price = card_price * card_count
-            new_card_name = f"{card_name} ({repeat_copies})"
-            card_details.update({new_card_name : card_price})
-        
-        else:
-            card_details.update({card_name : card_price})
-
-            # # Checks if card is already inputted at least once
-            # if card_name in card_details:
+        card_details.update({card_name : card_price})
 
     # Create data frame and total_price
-    card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=['']).to_string()
-    
+    card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
     
     print(card_names_and_prices_data_frame)
 
@@ -149,15 +116,15 @@ def main():
         total_price, card_names_and_prices_data_frame, converted_symbol = convert_currency(card_details, default_symbol)
         symbol = converted_symbol
 
-    total_price_string = f"\nTotal price of cards: {symbol}${total_price}"
+    total_price_string = f"\nTotal price: {symbol}${total_price}"
 
     print(card_names_and_prices_data_frame)
     print(total_price_string)
 
-    # Writing to file stuff
+    # Writing to file
     while True:
         try:
-            answer = input("Do you want to export a list of the prices? (y/n): ").lower()
+            answer = input("Export a list of the prices? (y/n): ").lower()
             break
         except:
             print(error_message)
