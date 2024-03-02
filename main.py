@@ -52,8 +52,8 @@ def write_to_file(data_frame, total_price_string):
 # Main Routine
 def main():
     # Key = card's name, value = card's price
+    card_amount = {}
     card_details = {}
-    repeat_copies = 1
 
     # Default currency
     default_symbol = 'USD'
@@ -64,7 +64,7 @@ def main():
     while True:
         while True:
             try:
-                card_name = input("Card name (leave blank if done): ").lower()
+                card_name = input("Card name (leave blank if done): ").lower().strip()
 
                 # If cannot fetch card price (or if card_name != "") it will loop
                 if card_name != "":
@@ -80,17 +80,25 @@ def main():
         if card_name == "":
             break
 
-        # Checks if card is already inputted at least once
-        if card_name in card_details:
-            repeat_copies += 1
-            card_name = f"{card_name} ({repeat_copies})"
+        # If the card doesn't already exist it creates new item
+        number_of_copies = 1
+
+        # Checks if card is already inputted at least once and adds more if repeat copy
+        if card_name in card_amount:
+            number_of_copies = card_amount.get(card_name) + 1
 
         # update dict with name and price
+        card_amount[card_name] = number_of_copies
         float(card_price)
-        card_details.update({card_name : card_price})
+        card_price *= number_of_copies
+        
+        # Format string after putting into card_amount dict otherwise it breaks
+        card_details[card_name] = card_price
+        # card_name = f"{card_name} {number_of_copies}"
 
-    # Create data frame and total_price
-    card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
+    # Create data frame and total_price and inserts the amount of each card
+    card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=[""])
+    card_names_and_prices_data_frame.insert(loc=1, column=" ", value=list(card_amount.values()))
     
     print(card_names_and_prices_data_frame)
 
