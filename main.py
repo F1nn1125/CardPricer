@@ -8,7 +8,11 @@ def convert_currency(card_details, default_symbol):
     while True:
         try:
             symbol = input("Please input the currency's symbol "
-                "you want to convert to, (e.g NZD, EUR, AUD): ").upper()
+                "you want to convert to, (e.g NZD, EUR, AUD), leave empty to skip: ").upper()
+            
+            # If they skip convertion then it just uses default symbol
+            if symbol.strip() == "":
+                symbol = default_symbol
 
             CurrencyConverter().convert(1, default_symbol, symbol) # Throw a test convert to check if symbol exists
             break
@@ -46,7 +50,6 @@ def write_to_file(data_frame, total_price_string):
     # Write in the data frame + total price
     text_file.write(str(data_frame))
     text_file.write(total_price_string)
-
     text_file.close()
 
 # Main Routine
@@ -110,19 +113,13 @@ def main():
 
     # Main loop done
 
-    symbol = default_symbol
 
-    while True:
-        try:
-            convert = input("Convert currency? (y/n): ").lower()
-            break
-        except:
-            print(error_message)
-            continue
-
-    if convert == "y" or convert == "yes":
-        total_price, card_names_and_prices_data_frame, converted_symbol = convert_currency(card_details, default_symbol)
-        symbol = converted_symbol
+    # Converting Currency
+    converted_symbol = "USD"
+    total_price, card_names_and_prices_data_frame, converted_symbol = convert_currency(card_details, default_symbol)
+    # Insert card amounts into dataframe again as they get removed by convert_currency(), there's a better way to do this but I don't have time to mull it over
+    card_names_and_prices_data_frame.insert(loc=1, column=" ", value=list(card_amount.values()))
+    symbol = converted_symbol
 
     total_price_string = f"\nTotal price: {symbol}${total_price}"
 
