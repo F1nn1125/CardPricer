@@ -68,12 +68,30 @@ def main():
         while True:
             try:
                 card_name = input("Card name (leave blank if done): ").lower().strip()
+                print(card_name)
 
+                if card_name.strip() == "":
+                    break
+
+                if card_name.split()[-1].isdigit() is True:
+                    number_of_copies = card_name.split()[-1]
+                    card_name = card_name.split()
+                    card_name.pop()
+                    card_name = " ".join(card_name)
+                
+                elif card_name.split()[0].isdigit() is True:
+                    number_of_copies = card_name.split()[0]
+                    card_name = card_name.split()
+                    card_name.pop(0)
+                    card_name = " ".join(card_name)
+                
+                else:
+                    number_of_copies = 1
+                    
                 # If cannot fetch card price (or if card_name != "") it will loop
-                if card_name != "":
-                    card_price = fetcher.get(card_name)
-
+                card_price = fetcher.get(card_name)
                 break
+                
             except:
                 print("Uhoh! It looks like your card doesn't exist, "
                     "please check your spelling and re-enter.")
@@ -83,17 +101,14 @@ def main():
         if card_name == "":
             break
 
-        # If the card doesn't already exist it creates new item
-        number_of_copies = 1
-
         # Checks if card is already inputted at least once and adds more if repeat copy
         if card_name in card_amount:
-            number_of_copies = card_amount.get(card_name) + 1
+            number_of_copies = int(card_amount.get(card_name)) + int(number_of_copies)
 
         # update dict with name and price
         card_amount[card_name] = number_of_copies
         float(card_price)
-        card_price *= number_of_copies
+        card_price *= int(number_of_copies)
         
         # Format string after putting into card_amount dict otherwise it breaks
         card_details[card_name] = card_price
