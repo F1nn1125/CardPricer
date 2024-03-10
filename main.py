@@ -52,6 +52,14 @@ def write_to_file(data_frame, total_price_string):
     text_file.write(total_price_string)
     text_file.close()
 
+# Removes the number from card name
+def extract_number_and_name(card_name, index):
+    number_of_copies = card_name.split()[index]
+    card_name = card_name.split()
+    card_name.pop(index)
+    card_name = " ".join(card_name)
+    return number_of_copies, card_name
+
 # Main Routine
 def main():
     # Key = card's name, value = card's price
@@ -61,29 +69,19 @@ def main():
     # Default currency
     default_symbol = 'USD'
 
-    # Default error message
-    error_message = "Please enter either y or n"
-
     while True:
         while True:
             try:
                 card_name = input("Card name (leave blank if done): ").lower().strip()
-                print(card_name)
 
                 if card_name.strip() == "":
                     break
 
                 if card_name.split()[-1].isdigit() is True:
-                    number_of_copies = card_name.split()[-1]
-                    card_name = card_name.split()
-                    card_name.pop()
-                    card_name = " ".join(card_name)
+                    number_of_copies, card_name = extract_number_and_name(card_name, -1)
                 
                 elif card_name.split()[0].isdigit() is True:
-                    number_of_copies = card_name.split()[0]
-                    card_name = card_name.split()
-                    card_name.pop(0)
-                    card_name = " ".join(card_name)
+                    number_of_copies, card_name = extract_number_and_name(card_name, 0)
                 
                 else:
                     number_of_copies = 1
@@ -112,7 +110,6 @@ def main():
         
         # Format string after putting into card_amount dict otherwise it breaks
         card_details[card_name] = card_price
-        # card_name = f"{card_name} {number_of_copies}"
 
     # Create data frame and total_price and inserts the amount of each card
     card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=[""])
@@ -128,9 +125,8 @@ def main():
 
     # Main loop done
 
-
     # Converting Currency
-    converted_symbol = "USD"
+    converted_symbol = default_symbol
     total_price, card_names_and_prices_data_frame, converted_symbol = convert_currency(card_details, default_symbol)
     # Insert card amounts into dataframe again as they get removed by convert_currency(), there's a better way to do this but I don't have time to mull it over
     card_names_and_prices_data_frame.insert(loc=1, column=" ", value=list(card_amount.values()))
@@ -147,7 +143,7 @@ def main():
             answer = input("Export a list of the prices? (y/n): ").lower()
             break
         except:
-            print(error_message)
+            print("Please enter either y or n")
             continue
 
     if answer == "y" or answer == "yes":
