@@ -79,7 +79,7 @@ def main():
 
                 if card_name.split()[-1].isdigit() is True:
                     number_of_copies, card_name = extract_number_and_name(card_name, -1)
-                
+
                 elif card_name.split()[0].isdigit() is True:
                     number_of_copies, card_name = extract_number_and_name(card_name, 0)
                 
@@ -88,6 +88,7 @@ def main():
                     
                 # If cannot fetch card price (or if card_name != "") it will loop
                 card_price = fetcher.get(card_name)
+                print(card_price)
                 break
                 
             except:
@@ -119,9 +120,18 @@ def main():
 
     # Create card_prices list
     card_prices = card_details.values()
-    card_prices = [float(price) for price in card_prices]
+    while True:
+        # Check if can be converted and if throws error then re-enter all of the prices through scryfall api to fix
+        try:
+            card_prices = [float(price) for price in card_prices]
+            break
+        except:
+            for i in card_details.keys():
+                card_price
+            card_prices = card_details.values
+            continue
 
-    total_price = round(sum(card_prices), 2) if card_prices else 0.0
+    total_price = round(sum(card_prices), 2) if card_prices != None else 0.0
 
     # Main loop done
 
