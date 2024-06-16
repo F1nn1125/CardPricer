@@ -1,3 +1,4 @@
+import csv, io
 import pandas as pd
 from datetime import datetime
 from sf_price_fetcher import fetcher
@@ -46,48 +47,118 @@ def write_to_file(data_frame, total_price_string):
         text_file.write(total_price_string)
     print(f"File saved as {file_name}")
 
+# Function to import card data from a file or pasted text
+def import_card_data():
+    card_details = {}
+    
+    while True:
+        import_choice = input("Do you want to import cards from a file or paste the data? (file/paste): ").lower()
+        
+        if "file" in import_choice.lower() or "paste" in import_choice.lower():
+            break
+        else:
+            print("Invalid choice. Please input 'file' or 'paste'.")
+
+    if "file" in import_choice.lower():
+        file_path = input("Please enter the file path: ")
+        try:
+            with open(file_path, 'r') as file:
+                card_data = file.read()
+        except FileNotFoundError:
+            print("File not found. Please check the file path.")
+            return card_details
+    else:
+        print("Please paste the card data (press Enter twice to finish):")
+        card_data = ""
+        while True:
+            line = input()
+            if line == "":
+                break
+            card_data += line + "\n"
+
+    card_data = io.StringIO(card_data)
+    reader = csv.reader(card_data, skipinitialspace=True)
+    for row in reader:
+        if row[0].startswith("#"):
+            continue
+        if len(row) >= 2:
+            card_name = row[0].strip()
+            try:
+                number_of_copies = int(row[1].strip())
+            except ValueError:
+                print(f"Invalid number of copies for card '{card_name}'. Skipping this entry.")
+                continue
+            if card_name in card_details:
+                card_details[card_name]['copies'] += number_of_copies
+            else:
+                card_details[card_name] = {'copies': number_of_copies, 'total_price': 0.0}
+    
+    return card_details
+
 # Main function
 def main():
     card_details = {}
 
     while True:
-        card_name = input("Please input card name (enter to continue): ")
-        if not card_name:
-            break
+        choice = input("Do you want to enter cards manually or import? (manual/import): ").lower()
         
-        try:
-            card_price = fetcher.get(card_name)
-        except Exception as ex:
-            if 'invalid card name' in str(ex).lower():
-                print("Invalid card name.")
-                continue
-            elif 'failed to establish a new connection' in str(ex).lower():
-                print("Internet connectivity error.")
-                continue
-            else:
+        if "import" in choice.lower():
+            imported_card_details = import_card_data()
+            if imported_card_details:
+                card_details.update(imported_card_details)
+            break  # Exit loop after importing
+        elif "manual" in choice.lower():
+            break  # Exit loop to start manual entry
+        else:
+            print("Invalid choice. Please input 'manual' or 'import'.")
+
+    while True:
+        if "manual" in choice.lower():
+            card_name = input("Please input the card name (enter to finish): ").strip()
+            if card_name == "":
+                break
+
+            try:
+                card_price = fetcher.get(card_name)
+            except Exception as ex:
                 print(f"Card lookup error: {str(ex)}")
                 continue
             
-        if card_price is None:
-            print("No prices found for the card.")
-            continue
-        
-        while True:
-            try:
-                number_of_copies = int(input("Please input number of copies: "))
-                break
-            except ValueError:
-                print("Please input a valid number.")
-        
-        card_price = round(float(card_price), 2)
-        if card_name in card_details:
-            card_details[card_name]['total_price'] += card_price * number_of_copies
-            card_details[card_name]['copies'] += number_of_copies
-        else:
-            card_details[card_name] = {
-                'total_price': card_price * number_of_copies,
-                'copies': number_of_copies
-            }
+            if card_price is None:
+                print("No prices found for the card.")
+                continue
+            
+            while True:
+                try:
+                    number_of_copies = int(input("Please input number of copies: "))
+                    break
+                except ValueError:
+                    print("Please input a valid number.")
+            
+            card_price = round(float(card_price), 2)
+            if card_name in card_details:
+                card_details[card_name]['total_price'] += card_price * number_of_copies
+                card_details[card_name]['copies'] += number_of_copies
+            else:
+                card_details[card_name] = {
+                    'total_price': card_price * number_of_copies,
+                    'copies': number_of_copies
+                }
+        elif "import" in choice.lower():
+            for card_name, card_data in list(card_details.items()):  # Create a copy of the items
+                try:
+                    card_price = fetcher.get(card_name)
+                except Exception as ex:
+                    print(f"Card lookup error: {str(ex)}")
+                    continue
+                
+                if card_price is None:
+                    print(f"No prices found for the card '{card_name}'.")
+                    card_price = 0.0
+                
+                card_price = round(float(card_price), 2)
+                card_details[card_name]['total_price'] = card_price * card_data['copies']
+        break
 
     if card_details:
         card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=['total_price', 'copies'])
