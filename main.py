@@ -1,4 +1,3 @@
-import csv, io
 import pandas as pd
 from datetime import datetime
 from sf_price_fetcher import fetcher
@@ -37,14 +36,17 @@ def convert_currency(card_details):
     return total_prices, card_names_and_prices_data_frame, symbol
 
 # It writes to the file
-def write_to_file(data_frame, total_price_string):
+def write_to_file(data_frame, total_price_string, output_format='txt'):
     today = datetime.now()
-    file_name_date = today.strftime("%d_%m_%Y")
-    file_name = f"card_price_list_{file_name_date}.txt"
+    file_name_date = today.strftime("%d_%m_%Y-%H_%M")
+    file_name = f"card_price_list_{file_name_date}.{output_format}"
+    if output_format == "csv":
+        data_frame.to_csv(file_name)
+    else:
+        with open(file_name, "w") as text_file:
+            text_file.write(data_frame.to_string())
+            text_file.write(total_price_string)
 
-    with open(file_name, "w") as text_file:
-        text_file.write(data_frame.to_string())
-        text_file.write(total_price_string)
     print(f"File saved as {file_name}")
 
 # Function to import card data from a file or pasted text
@@ -60,13 +62,16 @@ def import_card_data():
             print("Invalid choice. Please input 'file' or 'paste'.")
 
     if "file" in import_choice.lower():
-        file_path = input("Please enter the file path: ")
-        try:
-            with open(file_path, 'r') as file:
-                card_data = file.read()
-        except FileNotFoundError:
-            print("File not found. Please check the file path.")
-            return card_details
+        while True:
+            file_path = input("Please enter the file path: ")
+            try:
+                with open(file_path, 'r') as file:
+                    card_data = file.read()
+                    break
+            except FileNotFoundError:
+                print("File not found. Please check the file path.")
+                continue
+
     else:
         print("Please paste the card data (press Enter twice to finish):")
         card_data = ""
@@ -75,16 +80,16 @@ def import_card_data():
             if line == "":
                 break
             card_data += line + "\n"
+    
+    importeddata = [line.split(" ") for line in card_data.split("\n")]
 
-    card_data = io.StringIO(card_data)
-    reader = csv.reader(card_data, skipinitialspace=True)
-    for row in reader:
-        if row[0].startswith("#"):
+    for card in importeddata:
+        if card[0].startswith("#"):
             continue
-        if len(row) >= 2:
-            card_name = row[0].strip()
+        if len(card) >= 2:
+            card_name = ' '.join(card[1:]).strip()
             try:
-                number_of_copies = int(row[1].strip())
+                number_of_copies = int(card[0].strip())
             except ValueError:
                 print(f"Invalid number of copies for card '{card_name}'. Skipping this entry.")
                 continue
@@ -176,11 +181,17 @@ def main():
         print(total_price_string)
 
         while True:
-            answer = input("Export a list of the prices? (y/n): ").lower()
-            if answer in {"y", "yes"}:
-                write_to_file(card_names_and_prices_data_frame, total_price_string)
+            exportData = input("Export a list of the prices? (y/n): ").lower()
+            if "y" in exportData or "yes" in exportData:
+                while True: 
+                    output_format = input("Please input the output format (txt/csv): ").lower()
+                    if output_format == "txt" or output_format == "csv":
+                        write_to_file(card_names_and_prices_data_frame, total_price_string, output_format)
+                        break
+                    else:
+                        print("Invalid output format. Please input 'txt' or 'csv'.")
                 break
-            elif answer in {"n", "no"}:
+            elif "n" in exportData or "no" in exportData:
                 break
             else:
                 continue
