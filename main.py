@@ -1,162 +1,202 @@
-from datetime import datetime
 import pandas as pd
+from datetime import datetime
 from sf_price_fetcher import fetcher
 from currency_converter import CurrencyConverter
 
+# Default currency
+DEFAULT_SYMBOL = 'USD'
+
 # Converts the currency
-def convert_currency(card_details, default_symbol):
+def convert_currency(card_details):
     while True:
+        symbol = input(
+            "Please input the currency's symbol you want to convert to (e.g. NZD, EUR, AUD) (enter to skip): ").upper()
+        
+        if symbol.strip() == "":
+            symbol = DEFAULT_SYMBOL
+        
         try:
-            symbol = input("Please input the currency's symbol "
-                "you want to convert to, (e.g NZD, EUR, AUD), leave empty to skip: ").upper()
-            
-            # If they skip convertion then it just uses default symbol
-            if symbol.strip() == "":
-                symbol = default_symbol
-
-            CurrencyConverter().convert(1, default_symbol, symbol) # Throw a test convert to check if symbol exists
+            CurrencyConverter().convert(1, symbol)  # Test conversion to check if symbol exists
             break
-        except:
+        except ValueError:
             print("Please input a valid currency symbol!")
-            continue
 
-    # For each card in the dict, it converts the currency.
+    # Convert currency for each card in the dictionary
     for key, value in card_details.items():
-        # Convert then round the price to 2dp
-        converted_price = CurrencyConverter(decimal=True).convert(value, default_symbol, symbol)
+        converted_price = CurrencyConverter(decimal=True).convert(value['total_price'], symbol)
         rounded_converted_price = round(converted_price, 2)
+        card_details[key]['total_price'] = rounded_converted_price
 
-        # Update the dictionary
-        card_details.update({key : rounded_converted_price})
-
-    # Update and print data frame
-    card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=[''])
-
-    # Sum all prices and insert into data frame
-    prices_list = list(card_details.values())
-    total_prices = sum(prices_list)
+    # Create DataFrame from updated card details
+    card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=['total_price', 'copies'])
+    card_names_and_prices_data_frame.rename(columns={'total_price': 'Price', 'copies': 'Copies'}, inplace=True)
+    
+    # Sum all prices
+    total_prices = sum(item['Price'] for item in card_names_and_prices_data_frame.to_dict('records'))
     return total_prices, card_names_and_prices_data_frame, symbol
 
 # It writes to the file
-def write_to_file(data_frame, total_price_string):
-    # Get datetime for file name
+def write_to_file(data_frame, total_price_string, output_format='txt'):
     today = datetime.now()
-    file_name_date = today.strftime("%d_%m_%Y")
+    file_name_date = today.strftime("%d_%m_%Y-%H_%M")
+    file_name = f"card_price_list_{file_name_date}.{output_format}"
+    if output_format == "csv":
+        data_frame.to_csv(file_name)
+    else:
+        with open(file_name, "w") as text_file:
+            text_file.write(data_frame.to_string())
+            text_file.write(total_price_string)
 
-    file_name = f"card_price_list_{file_name_date}"
-    write_to = f"{file_name}.txt"
-    text_file = open(write_to, "w+")
+    print(f"File saved as {file_name}")
 
-    # Write in the data frame + total price
-    text_file.write(str(data_frame))
-    text_file.write(total_price_string)
-    text_file.close()
-
-# Removes the number from card name
-def extract_number_and_name(card_name, index):
-    number_of_copies = card_name.split()[index]
-    card_name = card_name.split()
-    card_name.pop(index)
-    card_name = " ".join(card_name)
-    return number_of_copies, card_name
-
-# Main Routine
-def main():
-    # Key = card's name, value = card's price
-    card_amount = {}
+# Function to import card data from a file or pasted text
+def import_card_data():
     card_details = {}
-
-    # Default currency
-    default_symbol = 'USD'
-
+    
     while True:
+        import_choice = input("Do you want to import cards from a file or paste the data? (file/paste): ").lower()
+        
+        if "file" in import_choice.lower() or "paste" in import_choice.lower():
+            break
+        else:
+            print("Invalid choice. Please input 'file' or 'paste'.")
+
+    if "file" in import_choice.lower():
         while True:
+            file_path = input("Please enter the file path: ")
             try:
-                card_name = input("Card name (leave blank if done): ").lower().strip()
-
-                if card_name.strip() == "":
+                with open(file_path, 'r') as file:
+                    card_data = file.read()
                     break
-
-                if card_name.split()[-1].isdigit() is True:
-                    number_of_copies, card_name = extract_number_and_name(card_name, -1)
-
-                elif card_name.split()[0].isdigit() is True:
-                    number_of_copies, card_name = extract_number_and_name(card_name, 0)
-                
-                else:
-                    number_of_copies = 1
-                    
-                # If cannot fetch card price (or if card_name != "") it will loop
-                card_price = fetcher.get(card_name)
-                print(card_price)
-                break
-                
-            except:
-                print("Uhoh! It looks like your card doesn't exist, "
-                    "please check your spelling and re-enter.")
+            except FileNotFoundError:
+                print("File not found. Please check the file path.")
                 continue
 
-        # Checks if user meant to break loop
-        if card_name == "":
-            break
-
-        # Checks if card is already inputted at least once and adds more if repeat copy
-        if card_name in card_amount:
-            number_of_copies = int(card_amount.get(card_name)) + int(number_of_copies)
-
-        # update dict with name and price
-        card_amount[card_name] = number_of_copies
-        float(card_price)
-        card_price *= int(number_of_copies)
-        
-        # Format string after putting into card_amount dict otherwise it breaks
-        card_details[card_name] = card_price
-
-    # Create data frame and total_price and inserts the amount of each card
-    card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=[""])
-    card_names_and_prices_data_frame.insert(loc=1, column=" ", value=list(card_amount.values()))
+    else:
+        print("Please paste the card data (press Enter twice to finish):")
+        card_data = ""
+        while True:
+            line = input()
+            if line == "":
+                break
+            card_data += line + "\n"
     
-    print(card_names_and_prices_data_frame)
+    importeddata = [line.split(" ") for line in card_data.split("\n")]
 
-    # Create card_prices list
-    card_prices = card_details.values()
-    while True:
-        # Check if can be converted and if throws error then re-enter all of the prices through scryfall api to fix
-        try:
-            card_prices = [float(price) for price in card_prices]
-            break
-        except:
-            for i in card_details.keys():
-                card_price
-            card_prices = card_details.values
+    for card in importeddata:
+        if card[0].startswith("#"):
             continue
+        if len(card) >= 2:
+            card_name = ' '.join(card[1:]).strip()
+            try:
+                number_of_copies = int(card[0].strip())
+            except ValueError:
+                print(f"Invalid number of copies for card '{card_name}'. Skipping this entry.")
+                continue
+            if card_name in card_details:
+                card_details[card_name]['copies'] += number_of_copies
+            else:
+                card_details[card_name] = {'copies': number_of_copies, 'total_price': 0.0}
+    
+    return card_details
 
-    total_price = round(sum(card_prices), 2) if card_prices != None else 0.0
+# Main function
+def main():
+    card_details = {}
 
-    # Main loop done
-
-    # Converting Currency
-    converted_symbol = default_symbol
-    total_price, card_names_and_prices_data_frame, converted_symbol = convert_currency(card_details, default_symbol)
-    # Insert card amounts into dataframe again as they get removed by convert_currency(), there's a better way to do this but I don't have time to mull it over
-    card_names_and_prices_data_frame.insert(loc=1, column=" ", value=list(card_amount.values()))
-    symbol = converted_symbol
-
-    total_price_string = f"\nTotal price: {symbol}${total_price}"
-
-    print(card_names_and_prices_data_frame)
-    print(total_price_string)
-
-    # Writing to file
     while True:
-        try:
-            answer = input("Export a list of the prices? (y/n): ").lower()
-            break
-        except:
-            print("Please enter either y or n")
-            continue
+        choice = input("Do you want to enter cards manually or import? (manual/import): ").lower()
+        
+        if "import" in choice.lower():
+            imported_card_details = import_card_data()
+            if imported_card_details:
+                card_details.update(imported_card_details)
+            break  # Exit loop after importing
+        elif "manual" in choice.lower():
+            break  # Exit loop to start manual entry
+        else:
+            print("Invalid choice. Please input 'manual' or 'import'.")
 
-    if answer == "y" or answer == "yes":
-        write_to_file(card_names_and_prices_data_frame, total_price_string)
+    while True:
+        if "manual" in choice.lower():
+            card_name = input("Please input the card name (enter to finish): ").strip()
+            if card_name == "":
+                break
 
-main()
+            try:
+                card_price = fetcher.get(card_name)
+            except Exception as ex:
+                print(f"Card lookup error: {str(ex)}")
+                continue
+            
+            if card_price is None:
+                print("No prices found for the card.")
+                continue
+            
+            while True:
+                try:
+                    number_of_copies = int(input("Please input number of copies: "))
+                    break
+                except ValueError:
+                    print("Please input a valid number.")
+            
+            card_price = round(float(card_price), 2)
+            if card_name in card_details:
+                card_details[card_name]['total_price'] += card_price * number_of_copies
+                card_details[card_name]['copies'] += number_of_copies
+            else:
+                card_details[card_name] = {
+                    'total_price': card_price * number_of_copies,
+                    'copies': number_of_copies
+                }
+        elif "import" in choice.lower():
+            for card_name, card_data in list(card_details.items()):  # Create a copy of the items
+                try:
+                    card_price = fetcher.get(card_name)
+                except Exception as ex:
+                    print(f"Card lookup error: {str(ex)}")
+                    continue
+                
+                if card_price is None:
+                    print(f"No prices found for the card '{card_name}'.")
+                    card_price = 0.0
+                
+                card_price = round(float(card_price), 2)
+                card_details[card_name]['total_price'] = card_price * card_data['copies']
+        break
+
+    if card_details:
+        card_names_and_prices_data_frame = pd.DataFrame.from_dict(card_details, orient='index', columns=['total_price', 'copies'])
+        card_names_and_prices_data_frame.rename(columns={'total_price': 'Price', 'copies': 'Copies'}, inplace=True)
+
+        print(card_names_and_prices_data_frame)
+
+        total_price = round(sum(item['total_price'] for item in card_details.values()), 2)
+        
+        total_price, card_names_and_prices_data_frame, symbol = convert_currency(card_details)
+        
+        total_price_string = f"\nTotal price: {symbol} ${total_price}"
+
+        print(card_names_and_prices_data_frame)
+        print(total_price_string)
+
+        while True:
+            exportData = input("Export a list of the prices? (y/n): ").lower()
+            if "y" in exportData or "yes" in exportData:
+                while True: 
+                    output_format = input("Please input the output format (txt/csv): ").lower()
+                    if output_format == "txt" or output_format == "csv":
+                        write_to_file(card_names_and_prices_data_frame, total_price_string, output_format)
+                        break
+                    else:
+                        print("Invalid output format. Please input 'txt' or 'csv'.")
+                break
+            elif "n" in exportData or "no" in exportData:
+                break
+            else:
+                continue
+    else:
+        print("No cards were added.")
+
+if __name__ == "__main__":
+    main()
