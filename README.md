@@ -13,4 +13,5 @@ This is just a personal project for myself that you're free to use as well!
 
 **PIP packages used in project:**
 - Pulls latest pricing from scryfall using https://pypi.org/project/sf-price-fetcher/
-- Converts Currency using https://pypi.org/project/CurrencyConverter/ library (not 100% up to date but pretty close).
+- Converts Currency using https://pypi.org/project/CurrencyConverter/ library (not 100% up to date but pretty close)
+- And of course, https://pypi.org/project/pandas/ for the dataframe
